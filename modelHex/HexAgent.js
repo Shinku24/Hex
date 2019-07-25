@@ -308,7 +308,7 @@ function testDjk(board, player){
             st = st + "\n";
         }
         alert(st)
-    }else{
+    }else{ //PLAYER 2
         let size = board.length;
         let matrix = [];
         let sts = " ";
@@ -320,17 +320,18 @@ function testDjk(board, player){
             }
         }
 
-        for(var i=0; i<size; i++) {            
+        for(var i=0; i<size; i++) {
+            matrix[i] = [];
             for(var j=0; j<size; j++) {
-                if(board[i][j]==player && j==0){
+                if(board[i][j]==player && i==0){
                     matrix[i][j] = 0;
                 }
-                else if(j==0){
-                    matrix[j][i] = 3;
-                }else if(board[j][i]==0 || board[j][i]==player){
-                    matrix[j][i] = -INFINITY;
+                else if(i==0){
+                    matrix[i][j] = 3;
+                }else if(board[i][j]==0 || board[i][j]==player){
+                    matrix[i][j] = -INFINITY;
                 }else{
-                    matrix[j][i] = INFINITY;
+                    matrix[i][j] = INFINITY;
                 }
                 sts = sts + matrix[i][j]+ " ";
             }

@@ -291,14 +291,37 @@ function testDjk(board, player){
             }
             sts = sts + "\n";
         }
-        //alert(sts);
         
         let nMatrix = 0;
         nMatrix = getMatrixCostosDjk(board, matrix, player);
 
         for(var i=0; i<size;i++){
             nMatrix = getMatrixCostosDjk(board, nMatrix, player);
+        }        
+
+        let menor = INFINITY;
+        let visitedNodes = []; 
+        let shortestPath = [];
+
+        for(var i=0; i<size;i++){
+            if(nMatrix[i][size-1] == -INFINITY){
+                continue
+            } else if (nMatrix[i][size-1] < menor && !visitedNodes.includes(nMatrix[i][size-1])){
+                menor = nMatrix[i][size-1];
+                shortestPath = [[i, size-1]];
+            } else if (nMatrix[i][size-1] == menor){
+                //shortestPath.push([i, size-1]);
+            }
         }
+
+        //alert(shortestPath[0]);
+        let path = findNextCheaperNeighbor(shortestPath[0], board, nMatrix, shortestPath, shortestPath);               
+        let showPath="";
+        
+        for(var i=0; i<path.length; i++){
+            showPath= showPath+path[i]+"\n";
+        }
+        alert(showPath);
 
         let st = " ";
         for(var i=0; i<nMatrix.length;i++){
@@ -307,7 +330,9 @@ function testDjk(board, player){
             }
             st = st + "\n";
         }
-        alert(st)
+        alert(st);
+
+    //-----------------------------------------------------------------------------------------------
     }else{ //PLAYER 2
         let size = board.length;
         let matrix = [];
@@ -358,4 +383,45 @@ function testDjk(board, player){
     }
     
     //return matrixCostos;
+}
+
+function findNextCheaperNeighbor (posicion, board, nMatrix, shortestPath,visitedNodes){    
+    let posibleMenorPos = [];
+    let menor = INFINITY;
+    let condition  = true;
+    let actualPos = posicion;
+    //alert("socorro");
+    
+    while (condition){
+        let posibleValidPath = getValidNeighbors(actualPos, board);
+        let posiblePath = getNeighbors(actualPos, board);    
+        if(actualPos[1]== 0){
+            condition = false;
+            continue;
+        }
+        for(var i = 0; i<posiblePath.length; i++){
+            alert([posiblePath[i][0], posiblePath[i][1]]);
+            alert(shortestPath)
+            alert(visitedNodes)
+            if(posibleValidPath[i]){
+                if (visitedNodes.includes([posiblePath[i][0], posiblePath[i][1]])){
+                    continue;
+                }else{
+                    if (nMatrix[posiblePath[i][0]][posiblePath[i][1]] > menor){
+                        visitedNodes.push( [posiblePath[i][0], posiblePath[i][1]] );
+                        alert("HOLLAAAAA");
+                        continue;
+                    } else {
+                        menor = nMatrix[posiblePath[i][0]][posiblePath[i][1]];
+                        posibleMenorPos = [posiblePath[i][0], posiblePath[i][1]];
+                        visitedNodes.push( [posiblePath[i][0], posiblePath[i][1]] );
+                        //alert(posibleMenorPos);
+                    }
+                }
+            }
+        }
+        actualPos = posibleMenorPos;
+        shortestPath.push(posibleMenorPos);
+    }
+    return shortestPath;
 }

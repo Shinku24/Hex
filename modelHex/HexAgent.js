@@ -27,10 +27,12 @@ class HexAgent extends Agent {
         let move = available[Math.round(Math.random() * ( available.length -1 ))];        
         //let matrixCostos = test(board,this.id);
         //alert("HOAL");
-        testDjk(board,this.id);
+       /* move = testDjk(board, this.id);*/
         //let me = getNeighbors([Math.floor (move / board.length), move % board.length], board);
         //alert([Math.floor (move / board.length), move % board.length])
-        return [Math.floor (move / board.length), move % board.length];
+        console.log(board);
+        let alphaBetaValue =alphaBetaMax(-INFINITY,INFINITY,6,board, this.id);
+        return move;
     }
 
 }
@@ -45,17 +47,13 @@ module.exports = HexAgent;
 function getEmptyHex(board) {
     let result = [];
     let size = board.length;
-    let st = "";
     for (let k = 0; k < size; k++) {
         for (let j = 0; j < size; j++) {
-            st = st + board[k][j];
             if (board[k][j] === 0) {
-                result.push(k * size + j);
+                result.push([k,j]);//(k * size + j);
             }
         }
-        st = st + "\n";
     }
-    //alert(st);
     return result;
 }
 
@@ -176,7 +174,7 @@ function getMatrixCostos(board, matrix, player){
         }
         st = st + "\n";
     }
-    alert(st);
+    //alert(st);
     return matrix;
 }
 
@@ -191,7 +189,7 @@ function test(board, player){
     }
     
     let matrixCostos = getMatrixCostos(board, matrix, player);
-    alert("holaa");
+    //alert("holaa");
     return matrixCostos;
 }
 
@@ -202,7 +200,7 @@ function getCostoDjk(actualPosVal, player){
     if(actualPosVal== 0){
         return  3;
     }else if(actualPosVal==player){
-        return 0;
+        return 1;
     }else{
         return INFINITY;
     }
@@ -222,7 +220,7 @@ function setCostoDjk(actualPos, player, matrix, board){
                 //alert(validMov[i]);
                 let costo = getCostoDjk(board[validMov[i][0]][validMov[i][1]], player);
                 
-                if(costo==3 || costo ==0){
+                if(costo==3 || costo ==1){
                     let costoAcumulado = 0;
                     if(matrixCopia[actualPos[0]][actualPos[1]]==-INFINITY){
                         continue
@@ -273,7 +271,6 @@ function testDjk(board, player){
     if(player==1){
         let size = board.length;
         let matrix = [];
-        let sts = " ";
         for(var i=0; i<size; i++) {
             matrix[i] = [];
             for(var j=0; j<size; j++) {
@@ -287,9 +284,7 @@ function testDjk(board, player){
                 }else{
                     matrix[i][j] = INFINITY;
                 }
-                sts = sts + matrix[i][j]+ " ";
             }
-            sts = sts + "\n";
         }
         
         let nMatrix = 0;
@@ -299,24 +294,19 @@ function testDjk(board, player){
             nMatrix = getMatrixCostosDjk(board, nMatrix, player);
         }        
 
-        //alert(shortestPath[0]);
-        let path = findNextCheaperNeighbor(board, nMatrix);               
-        let showPath="";
-        
-        for(var i=0; i<path.length; i++){
-            showPath= showPath+path[i]+"\n";
-        }
-        alert(showPath);
-
-        let st = " ";
-        for(var i=0; i<nMatrix.length;i++){
-            for(var j=0; j<nMatrix.length;j++){
-                st = st + nMatrix[i][j] + " ";
+        let path = findNextCheaperNeighbor (board, nMatrix, 1);
+        /*let rand = Math.floor((Math.random() * path.length-1) + 1);*/
+       /* while (path.length != 0){
+            //console.log(path);
+            let rand = Math.floor((Math.random() * path.length-1) + 1);
+            if (board[path[rand][0]][path[rand][1]] != 1){
+                return path[rand];
+            }else{
+                path.splice(rand,1);
             }
-            st = st + "\n";
-        }
-        alert(st);
-
+        }*/
+        let info = [path,nMatrix];
+        return info;
     //-----------------------------------------------------------------------------------------------
     }else{ //PLAYER 2
         let size = board.length;
@@ -329,7 +319,6 @@ function testDjk(board, player){
                 matrix[i][j] = 0;
             }
         }
-
         for(var i=0; i<size; i++) {
             matrix[i] = [];
             for(var j=0; j<size; j++) {
@@ -347,14 +336,26 @@ function testDjk(board, player){
             }
             sts = sts + "\n";
         }
-        //alert(sts);
-        
         let nMatrix = 0;
         nMatrix = getMatrixCostosDjkVertical(board, matrix, player);
 
         for(var i=0; i<size;i++){
             nMatrix = getMatrixCostosDjkVertical(board, nMatrix, player);
         }
+
+        let path = findNextCheaperNeighbor (board, nMatrix, 0);
+        /*let rand = Math.floor((Math.random() * path.length-1) + 1);*/
+        /*while (path.length != 0){
+            let rand = Math.floor((Math.random() * path.length-1) + 1);
+            if (board [path[rand][0]][path[rand][1]] != 2){
+                return path[rand]
+            }else{
+                path.splice(rand,1);
+            }
+        }*/
+
+        let info = [path,nMatrix];
+        return info;
 
         let st = " ";
         for(var i=0; i<nMatrix.length;i++){
@@ -363,14 +364,26 @@ function testDjk(board, player){
             }
             st = st + "\n";
         }
-        alert(st)
-
     }
-    
     //return matrixCostos;
 }
 
-function findNextCheaperNeighbor (board, nMatrix){
+
+function include (array, value){
+    let isEqual = false
+    for (var i=0; i<array.length; i++){
+        if(array[i].length!=value.length) {
+            return isEqual; 
+        }else{
+            if(array[i][0]==value[0] && array[i][1]==value[1]) {
+                isEqual = true; 
+            }
+        } 
+    }
+    return isEqual;
+}
+
+function findNextCheaperNeighbor (board, nMatrix, player){
     let shortestPath = [];
     let visitedNodes = [];
     let stopIterating = false;
@@ -378,29 +391,44 @@ function findNextCheaperNeighbor (board, nMatrix){
     let position = [];
     let menor = INFINITY;
     
-    for(var i=0; i<size;i++){
-        if(nMatrix[i][size-1] == -INFINITY){
-            continue
-        } else if (nMatrix[i][size-1] <= menor && !visitedNodes.includes([i , size-1])){
-            menor = nMatrix[i][size-1];
-            shortestPath = [[i, size-1]];
-            position = [i, size-1];
+    if(player == 1){
+        for(var i=0; i<size;i++){
+            if(nMatrix[i][size-1] == -INFINITY){
+                continue
+            } else if (nMatrix[i][size-1] <= menor && !include(visitedNodes, [i, size-1])){
+                menor = nMatrix[i][size-1];
+                shortestPath = [[i, size-1]];
+                position = [i, size-1];
+            }
+        }
+    }else {
+        for(var i=0; i<size;i++){
+            if(nMatrix[size-1][i] == -INFINITY){
+                continue
+            } else if (nMatrix[size-1][i] <= menor && !include(visitedNodes, [size-1, i])){
+                menor = nMatrix[size-1][i];
+                shortestPath = [[size-1, i]];
+                position = [size-1, i];
+            }
         }
     }
+
+    visitedNodes.push(position);
     
+    menor = INFINITY
     while (!stopIterating) {
-        menor = INFINITY
         let boolNeighbors = getValidNeighbors(position, board);
         let neighbors = getNeighbors(position, board);
 
+        //alert(position player: ${position}, menor : ${menor})
+
         for (var i=0; i<neighbors.length; i++){
-            
             if (boolNeighbors[i]) {
-                if (position[0] != 0){
-                    stopIterating = true
+                if (position[player] == 0){
+                    stopIterating = true;
                 }
-                else if (visitedNodes.includes(neighbors[i])){
-                    continue;
+                if (include(visitedNodes, neighbors[i])){
+                    continue;   
                 }
                 if(nMatrix[neighbors[i][0]][neighbors[i][1]] == -INFINITY){
                     visitedNodes.push(neighbors[i]);
@@ -408,32 +436,143 @@ function findNextCheaperNeighbor (board, nMatrix){
                 } else if (nMatrix[neighbors[i][0]][neighbors[i][1]] > menor){
                     visitedNodes.push(neighbors[i]);
                     continue;
-                }else if (nMatrix[neighbors[i][0]][neighbors[i][1]] <= menor && !visitedNodes.includes([i , size-1])){
+                }else if (nMatrix[neighbors[i][0]][neighbors[i][1]] <= menor && !include(visitedNodes, neighbors[i])) {
                     visitedNodes.push(neighbors[i]);
                     menor = nMatrix[neighbors[i][0]][neighbors[i][1]];
                     position = neighbors[i];
+                } else {
+                    visitedNodes.push(neighbors[i]);
+                    menor = nMatrix[neighbors[i][0]][neighbors[i][1]];
+                    position = neighbors[i]
                 }
             }
         }
-
         shortestPath.push(position);
-
     }
-
-
+    return shortestPath
 }
 
-function minimax (board, depth, player){
+function alphaBetaMax(alpha, beta, depth, board ,player){
+    let info = testDjk(board, player);
+    let path = info[0];
+    let nMatrix = info[1];
+    let score = 0;
+    if(depth==0){
+        return nMatrix[path[0][0]][path[0][1]];
+    }
+    for (var i=0; i<path.length; i++){
+        if(player==0){
+            score = alphaBetaMin(alpha, beta, depth-1, board ,1);
+        }else{
+            score = alphaBetaMin(alpha, beta, depth-1, board ,0);
+        }
+        if(score>=beta){
+            return beta;
+        }
+        if(score>alpha){
+            alpha=score;
+        }
+    }
+    return alpha;
+}
 
-    let cola = [];
+function alphaBetaMin(alpha, beta, depth, board ,player){
+    let info = testDjk(board, player);
+    let path = info[0];
+    let nMatrix = info[1];
+    let score = 0;
+    if(depth==0){
+        return -1*nMatrix[path[0][0]][path[0][1]];
+    }
+    for (var i=0; i<path.length; i++){
+        if(player==0){
+            score = alphaBetaMax(alpha, beta, depth-1, board ,1);
+        }else{
+            score = alphaBetaMax(alpha, beta, depth-1, board ,0);
+        }
+        if (score<=alpha){
+            return alpha;
+        }
+        if(score<beta){
+            beta=score;
+        }
+    }
+    return beta;
+}
+
+
+
+
+/*
+function minimax (board, depth, player, initialNodes){
+
+    let cola = initialNodes;
     let keepIterating = true;
     let alpha = 0;
     let betha = 0;
-
+    n = 0
     while (keepIterating) {
+        n = n+1
+        if (n > depth){
+            continue;
+        }
         if (player) {
             //aqui va el maximizador
+            let matrix1 = []
+            for(var i=0; i<size; i++) {
+                matrix1[i] = [];
+                for(var j=0; j<size; j++) {
+                    if(board[i][j] == player && j == 0){
+                        matrix1[i][j] = 0;
+                    } else if(j == 0){
+                        matrix1[i][j] = 3;
+                    } else if(board[i][j] == 0 || board[i][j] == player){
+                        matrix1[i][j] = -INFINITY;
+                    } else{
+                        matrix1[i][j] = INFINITY;
+                    }
+                }
+            }
+            let matrix2 = [];
+            for(var i=0; i<size; i++) {
+                matrix2[i] = [];
+                for(var j=0; j<size; j++) {
+                    matrix2[i][j] = 0;
+                }
+            }
+            for(var i=0; i<size; i++) {
+                matrix2[i] = [];
+                for(var j=0; j<size; j++) {
+                    if(board[i][j]==player && i==0){
+                        matrix2[i][j] = 0;
+                    }
+                    else if(i==0){
+                        matrix2[i][j] = 3;
+                    }else if(board[i][j]==0 || board[i][j]==player){
+                        matrix2[i][j] = -INFINITY;
+                    }else{
+                        matrix2[i][j] = INFINITY;
+                    }
+                }
+            }
+            if(cola.length == 0){
+                return false;
+            }else{
+                let nMatrixp1 = getMatrixCostosDjk(board, matrix1, 1);
+                let nMatrixp2 = getMatrixCostosDjk(board, matrix2, 2);
+                let path1 = findNextCheaperNeighbor(board, nMatrixp1, 1);
+                let path2 = findNextCheaperNeighbor(board, nMatrixp2, 0);
+                for(var i; i<path.length; i++){
+                    if(include(cola, path[i])){
+                        continue;
+                    } else{
+                        cola.push([path1[i], nMatrixp1[ path[0][0]][path[0][1]] - nMatrixp2[ path2[0][0]][path2[0][1]]], cola[0])
+                    }
+                }
+            }
         } else {
+            let path = findNextCheaperNeighbor(board, nMatrix, 0);
+            //alert(Path: ${path}, player: ${player});
             //aqui va el minimizador
         }
 
@@ -442,3 +581,4 @@ function minimax (board, depth, player){
         }
     }
 }
+*/

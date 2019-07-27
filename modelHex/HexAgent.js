@@ -1,5 +1,6 @@
 const Agent = require('ai-agents').Agent;
 var INFINITY = 100;
+let board = []
 //let globalBoard = [[]];
 
 class HexAgent extends Agent {
@@ -36,8 +37,8 @@ class HexAgent extends Agent {
         //console.log(board);
         /*let alphaBetaValue =alphaBetaMax(-INFINITY,INFINITY,6,board, this.id, []);
         console.log(alphaBetaValue);*/
-        let nodes = alphaBetaMinMax(-INFINITY,INFINITY,board,this.id,2);
-        //console.log(nodes);
+        let nodes = alphaBetaMax(-INFINITY, INFINITY, 3, board, this.id, 0)
+        console.log(nodes);
         return move;
     }
 
@@ -91,13 +92,10 @@ function getNeighbors(position, board){
     */
     let AIsValid = isValid([position[0]-1,position[1]+0], board, size);
     let BIsValid = isValid([position[0]-1,position[1]+1], board, size);
-
     let CIsValid = isValid([position[0]+0,position[1]-1], board, size);
     let DIsValid = isValid([position[0]+0,position[1]+1], board, size);
-
     let EIsValid = isValid([position[0]+1,position[1]-1], board, size);
     let FIsValid = isValid([position[0]+1,position[1]+0], board, size);
-
     if(AIsValid){ result.push([position[0]-1,position[1]+0]); }
     else{ result.push([false,false]); }
     if(BIsValid){ result.push([position[0]-1,position[1]+1]); }
@@ -225,14 +223,12 @@ function getMatrixCostosDjk(board, matrix, player){
 function testDjk(board, player){
     let size = board.length;
     let matrix = [];
-
     for(var i=0; i<size; i++) {
         matrix[i] = [];
         for(var j=0; j<size; j++) {
             matrix[i][j] = 0;
         }
     }
-
     if(player==1){        
         for(var i=0; i<size; i++) {
             matrix[i] = [];
@@ -250,8 +246,8 @@ function testDjk(board, player){
             }
         }        
     //-----------------------------------------------------------------------------------------------
-    }else{ //PLAYER 2        
-        for(var i=0; i<size; i++) {            
+    }else{ //PLAYER 2 
+        for(var i=0; i<size; i++) {   
             for(var j=0; j<size; j++) {
                 if(board[i][j]==player && i==0){
                     matrix[i][j] = 0;
@@ -266,20 +262,17 @@ function testDjk(board, player){
             }
         }        
     }
-
     let nMatrix = 0;
     nMatrix = getMatrixCostosDjk(board, matrix, player);
-
     for(var i=0; i<size;i++){
         nMatrix = getMatrixCostosDjk(board, nMatrix, player);
-    }        
+    }
     let path=0;
     if(player==1){
         path = findNextCheaperNeighbor (board, nMatrix, 1);
     }else{
         path = findNextCheaperNeighbor (board, nMatrix, 0);
     }
-
     let info = [path,nMatrix];
     return info;
 }
@@ -304,9 +297,8 @@ function findNextCheaperNeighbor (board, nMatrix, player){
     let visitedNodes = [];
     let stopIterating = true;
     let size = board.length;
-    let position = [];
+    let position = [1,1];
     let menor = INFINITY;
-    
     if(player == 1){
         for(var i=0; i<size;i++){
             if(nMatrix[i][size-1] == -INFINITY){
@@ -332,13 +324,16 @@ function findNextCheaperNeighbor (board, nMatrix, player){
     visitedNodes.push(position);
     
     menor = INFINITY
+    n=0
     while (stopIterating) {
+        n=n+1
+        console.log(`me quede atrapado en el while? ${n}`)
+        console.log(`position: ${position}, board: ${board}`)
         let boolNeighbors = getValidNeighbors(position, board);
         let neighbors = getNeighbors(position, board);
-
         for (var i=0; i<neighbors.length; i++){
             if (boolNeighbors[i]) {
-                if (position[player] == 0){
+                if (position[player] == 0 || n > 50){
                     stopIterating = false;
                 }
                 if (include(visitedNodes, neighbors[i])){
@@ -376,131 +371,53 @@ class Node {
     }
 }
 
+function alphaBetaMax(alpha, beta, depth, board ,player, n){
+    console.log("\n Maximo: \n")
 
-function alphaBetaMinMax(alpha, beta, board, player, depth){
-    let nodes = [];
-    let flag = true;
-    let info = testDjk(board, player);
+    info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
-    let heuristic =nMatrix[path[0][0]][path[0][1]];
-
-    let posibleBestMove = new Node (null, null, null, 0, null)
-
-    for (var i=0; i<path.length; i++){
-        let node = new Node (path[i], heuristic , player, 0, null);
-        nodes.push(node);   
-    }
-
-    while(flag){
-        let n = 0;
-        if(nodes.length==0){
-            flag = false;
-            continue;
-        }
-        let actualNode = nodes[0];
-        nodes.splice(nodes[0],1);
-        if(actualNode.player==player){
-            let n = 0;
-            for(var i = 1; i < nodes.length; i++){
-                if (nodes.depth<=depth){
-                    console.log("entra al for del jugador uno");
-                    if(nodes[i].heuristic > nodes[0].heuristic){
-                        nodes.splice(nodes[0],1);
-                        continue;
-                    } else {
-                        console.log("entra al else del jugador uno")
-                        let boardnew = board;
-                        boardnew[nodes[i].pos[0]][nodes[i].pos[1]] = player;
-                        let info = testDjk(boardnew, player);
-                        let path = info[0];
-                        let nMatrix = info[1];
-                        let heuristic = nMatrix[path[0][0]][path[0][1]];
-                        for (var i=0; i<path.length; i++){
-                            let node = new Node (path[i], heuristic , player, nodes[n].depth+1, nodes[i]);
-                            nodes.push(node);
-                        }
-                        nodes.splice(nodes[i],1);
-                        console.log(nodes);
-                    }
-                }
-            }
-        }else{
-            let n = 0;
-            for(var i = 1; i < nodes.length; i++){
-                if(nodes.depth<=depth){
-                    console.log("entra al for del jugador dos");
-                    if(nodes[i].heuristic < nodes[0].heuristic){
-                    console.log("entra la condicion true del if");
-                    nodes.splice(nodes[0],1);
-                    continue;
-                } else {
-                    console.log("entra la condicion false del if");
-                    let boardnew = board;
-                    boardnew[nodes[i].pos[0]][nodes[i].pos[1]] = player;
-                    let info = testDjk(boardnew, player);
-                    let path = info[0];
-                    let nMatrix = info[1];
-                    let heuristic = nMatrix[path[0][0]][path[0][1]];
-                    for (var i=0; i<path.length; i++){
-                        let node = new Node (path[i], heuristic , player, nodes[n].depth-1, nodes[i]);
-                        nodes.push(node);
-                    }
-                    nodes.splice(nodes[i],1);
-                    }   
-                }
-            }
-        }
-        return nodes[0];
-    }
-}
-
-/*
-function alphaBetaMax(alpha, beta, depth, board ,player, nodeList){
-    let info = testDjk(board, player);
-    let path = info[0];
-    let nMatrix = info[1];
+    delete info
     let score = 0;
-    let auxPos = [];
-
     if(depth==0){
         return nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
         if(player==0){
-           //board[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMin(alpha, beta, depth-1, board ,1, []);
+            board[path[i][0]][path[i][1]] = 2;
+            score = alphaBetaMin(alpha, beta, depth-1, board ,1, n+1);
         }else{
-            //board[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMin(alpha, beta, depth-1, board ,0, []);
+            board[path[i][0]][path[i][1]] = 1;
+            score = alphaBetaMin(alpha, beta, depth-1, board ,0, n+1);
         }
         if(score>=beta){
             return beta;
         }
         if(score>alpha){
             alpha=score;
-            //auxPos=path[i];
         }
     }
     return alpha;
 }
 
-function alphaBetaMin(alpha, beta, depth, board ,player, nodeList){
-    let info = testDjk(board, player);
+function alphaBetaMin(alpha, beta, depth, board ,player, n){
+    console.log("\n Minimo: \n")
+
+    info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
+    delete info
     let score = 0;
-    let auxPos = [];
     if(depth==0){
         return -1*nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
         if(player==0){
-            //board[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMax(alpha, beta, depth-1, board ,1, []);
+            board[path[i][0]][path[i][1]] = 2;
+            score = alphaBetaMax(alpha, beta, depth-1, board ,1, n+1);
         }else{
-            //board[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMax(alpha, beta, depth-1, board ,0, []);
+            board[path[i][0]][path[i][1]] = 1;
+            score = alphaBetaMax(alpha, beta, depth-1, board ,0, n+1);
         }
         if (score<=alpha){
             return alpha;
@@ -511,4 +428,3 @@ function alphaBetaMin(alpha, beta, depth, board ,player, nodeList){
     }
     return beta;
 }
-*/

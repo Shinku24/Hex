@@ -362,11 +362,11 @@ function alphaBetaMax(alpha, beta, depth, board ,player){
     let nMatrix = info[1];
     delete info
     let score = [[3,3],0];
-    if(path.length==0){
-        return [[0,0],-100]
-    }
     if(depth==0 ){
-        return [path[0],nMatrix[path[0][0]][path[0][1]]];
+        if(path.length == 0){
+            return [[3,3],-100];
+        }
+        return [path[0],-1*nMatrix[path[0][0]][path[0][1]]];
     }
     for (var i=0; i<path.length; i++){
         var newBoard = JSON.parse(JSON.stringify(board));
@@ -377,8 +377,6 @@ function alphaBetaMax(alpha, beta, depth, board ,player){
             newBoard[path[i][0]][path[i][1]] = 2;
             score = alphaBetaMin(alpha, beta, depth-1, newBoard ,1);
         }
-        console.log("Maximizo")
-        console.log(`Score: ${score[1]}, alpha: ${alpha[1]}, beta: ${beta[1]}`)
         if(score[1]>=beta[1]){
             return [path[i],beta[1]];
         }
@@ -386,7 +384,6 @@ function alphaBetaMax(alpha, beta, depth, board ,player){
             alpha=[path[i],score[1]];
         }
     }
-    console.log(`alpha: ${alpha}`)
     return alpha;
 }
 
@@ -396,11 +393,11 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
     let nMatrix = info[1];
     delete info
     let score = [[3,3],0];
-    if(path.length==0){
-        return [[0,0],99]
-    }
     if(depth==0){
-        return [path[0],-1*nMatrix[path[0][0]][path[0][1]]];
+        if(path.length == 0){
+            return [[3,3],100];
+        }
+        return [path[0],nMatrix[path[0][0]][path[0][1]]];
     }
     for (var i=0; i<path.length; i++){
         var newBoard = JSON.parse(JSON.stringify(board));
@@ -411,8 +408,6 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
             newBoard[path[i][0]][path[i][1]] = 2;
             score = alphaBetaMax(alpha, beta, depth-1, newBoard ,1);
         }
-        console.log("Minimizo")
-        console.log(`Score: ${score[1]}, alpha: ${alpha[1]}, beta: ${beta[1]}`)
         if (score[1]<=alpha[1]){
             return [path[i],alpha[1]];
         }
@@ -420,7 +415,6 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
             beta=[path[i],score[1]];
         }
     }
-    console.log(`Beta: ${beta}`)
     return beta;
 }
 

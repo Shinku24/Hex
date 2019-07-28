@@ -30,8 +30,8 @@ class HexAgent extends Agent {
         var id = this.id
         var auxBoard = board
         let move = available[Math.round(Math.random() * ( available.length -1 ))];       
-        let nodes = alphabetaminimax([[0,0],-INFINITY], [[0,0], INFINITY], 3, auxBoard, id);
-        console.log(nodes[0]);
+        let nodes = alphabetaminimax([[0,0],-INFINITY], [[0,0],INFINITY], 3, auxBoard, id)
+        console.log(nodes);
         return nodes[0];
     }
 
@@ -154,7 +154,7 @@ function getValidNeighbors(position, board){
 function getCostoDjk(actualPosVal, player){
     //alert(actualPosVal);
     if(actualPosVal== 0){
-        return  3;
+        return  2;
     }else if(actualPosVal==player){
         return 1;
     }else{
@@ -171,7 +171,7 @@ function setCostoDjk(actualPos, player, matrix, board){
         for(var i=0; i<areValidMov.length; i++){
             if(areValidMov[i]){
                 let costo = getCostoDjk(board[validMov[i][0]][validMov[i][1]], player);
-                if(costo==3 || costo ==1){
+                if(costo==2 || costo ==1){
                     let costoAcumulado = 0;
                     if(matrixCopia[actualPos[0]][actualPos[1]]==-INFINITY){
                         continue
@@ -255,8 +255,7 @@ function testDjk(board, player){
             }
         }        
     }
-    let nMatrix = 0;
-    nMatrix = getMatrixCostosDjk(board, matrix, player);
+    let nMatrix = getMatrixCostosDjk(board, matrix, player);
     for(var i=0; i<size;i++){
         nMatrix = getMatrixCostosDjk(board, nMatrix, player);
     }
@@ -313,11 +312,9 @@ function findNextCheaperNeighbor (board, nMatrix, player){
             }
         }
     }
-
     if(shortestPath.length == 0){
         return []
     }
-
     visitedNodes.push(position);
     
     menor = INFINITY
@@ -328,7 +325,7 @@ function findNextCheaperNeighbor (board, nMatrix, player){
         let neighbors = getNeighbors(position, board);
         for (var i=0; i<neighbors.length; i++){
             if (boolNeighbors[i]) {
-                if (position[player] == 0 || n < 26){
+                if (position[player] == 0 || n > 50){
                     stopIterating = false;
                 }
                 if (include(visitedNodes, neighbors[i])){
@@ -344,10 +341,13 @@ function findNextCheaperNeighbor (board, nMatrix, player){
                     visitedNodes.push(neighbors[i]);
                     menor = nMatrix[neighbors[i][0]][neighbors[i][1]];
                     position = neighbors[i];
+                } else if (include(visitedNodes, neighbors[i])){
+                    visitedNodes.push(neighbors[i]);
                 } else {
                     visitedNodes.push(neighbors[i]);
                     menor = nMatrix[neighbors[i][0]][neighbors[i][1]];
                     position = neighbors[i]
+                    
                 }
             }
         }
@@ -356,45 +356,37 @@ function findNextCheaperNeighbor (board, nMatrix, player){
     return shortestPath
 }
 
-class Node {
-    constructor(pos, heuristic, player, depth, father){
-        this.pos = pos;
-        this.heuristic = heuristic;
-        this.player = player;
-        this.depth = depth;
-        this.father = father;
-    }
-}
-
 function alphaBetaMax(alpha, beta, depth, board ,player){
     info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
     delete info
-    let score = 0;
+    let score = [[3,3],0];
     if(path.length==0){
-        return 0
+        return [[0,0],-100]
     }
     if(depth==0 ){
-        return nMatrix[path[0][0]][path[0][1]];
+        return [path[0],nMatrix[path[0][0]][path[0][1]]];
     }
     for (var i=0; i<path.length; i++){
+        var newBoard = JSON.parse(JSON.stringify(board));
         if(player==1){
-            var newBoard = board
-            newBoard[path[i][0]][path[i][1]] = 2;
-            score[1] = alphaBetaMin(alpha, beta, depth-1, board ,1);
-        }else{
-            var newBoard = board
             newBoard[path[i][0]][path[i][1]] = 1;
-            score[1] = alphaBetaMin(alpha, beta, depth-1, board ,2);
+            score = alphaBetaMin(alpha, beta, depth-1, newBoard  ,2);
+        }else{
+            newBoard[path[i][0]][path[i][1]] = 2;
+            score = alphaBetaMin(alpha, beta, depth-1, newBoard ,1);
         }
-        if(score[1]>=beta){
-            return [path[i],beta];
+        console.log("Maximizo")
+        console.log(`Score: ${score[1]}, alpha: ${alpha[1]}, beta: ${beta[1]}`)
+        if(score[1]>=beta[1]){
+            return [path[i],beta[1]];
         }
-        if(score[1]<alpha){
-            alpha=score[path[i],score];
+        if(score[1]>alpha[1]){
+            alpha=[path[i],score[1]];
         }
     }
+    console.log(`alpha: ${alpha}`)
     return alpha;
 }
 
@@ -405,37 +397,39 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
     delete info
     let score = [[3,3],0];
     if(path.length==0){
-        return 0
+        return [[0,0],99]
     }
     if(depth==0){
-        return -1*nMatrix[path[0][0]][path[0][1]];
+        return [path[0],-1*nMatrix[path[0][0]][path[0][1]]];
     }
     for (var i=0; i<path.length; i++){
+        var newBoard = JSON.parse(JSON.stringify(board));
         if(player==1){
-            var newBoard = board
-            newBoard[path[i][0]][path[i][1]] = 2;
-            score[1] = alphaBetaMax(alpha, beta, depth-1, board ,1);
-        }else{
-            var newBoard = board
             newBoard[path[i][0]][path[i][1]] = 1;
-            score[1] = alphaBetaMax(alpha, beta, depth-1, board ,2);
+            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,2);
+        }else{
+            newBoard[path[i][0]][path[i][1]] = 2;
+            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,1);
         }
-        if (score[1]<=alpha){
-            return [path[i],alpha];
+        console.log("Minimizo")
+        console.log(`Score: ${score[1]}, alpha: ${alpha[1]}, beta: ${beta[1]}`)
+        if (score[1]<=alpha[1]){
+            return [path[i],alpha[1]];
         }
-        if(score[1]<beta){
-            beta=score[path[i],score];
+        if(score[1]<beta[1]){
+            beta=[path[i],score[1]];
         }
     }
+    console.log(`Beta: ${beta}`)
     return beta;
 }
 
 function alphabetaminimax(alpha, beta, depth, board ,player){
     if(player == 2){
         player = 0
-        return alphaBetaMax(alpha, beta, depth, board ,player)
+        return alphaBetaMin(alpha, beta, depth, board ,player)
     } else{
         player = 1
-        return alphaBetaMax(alpha, beta, depth, board ,player)
+        return alphaBetaMin(alpha, beta, depth, board ,player)
     }
 }

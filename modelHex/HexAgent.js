@@ -28,20 +28,11 @@ class HexAgent extends Agent {
         }
 
         var id = this.id
-
-        let move = available[Math.round(Math.random() * ( available.length -1 ))];        
-        //let matrixCostos = test(board,this.id);
-        //alert("HOAL");
-       /* move = testDjk(board, this.id);*/
-       //move = [4,3];
-        //let me = getNeighbors([Math.floor (move / board.length), move % board.length], board);
-        //alert([Math.floor (move / board.length), move % board.length])
-        //console.log(board);
-        /*let alphaBetaValue =alphaBetaMax(-INFINITY,INFINITY,6,board, this.id, []);
-        console.log(alphaBetaValue);*/
-        let nodes = alphaBetaMin(-INFINITY, INFINITY, 3, board, id, 0)
-        console.log(nodes);
-        return move;
+        var auxBoard = board
+        let move = available[Math.round(Math.random() * ( available.length -1 ))];       
+        let nodes = alphabetaminimax([[0,0],-INFINITY], [[0,0], INFINITY], 3, auxBoard, id);
+        console.log(nodes[0]);
+        return nodes[0];
     }
 
 }
@@ -375,7 +366,7 @@ class Node {
     }
 }
 
-function alphaBetaMax(alpha, beta, depth, board ,player, n){
+function alphaBetaMax(alpha, beta, depth, board ,player){
     info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
@@ -388,29 +379,31 @@ function alphaBetaMax(alpha, beta, depth, board ,player, n){
         return nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
-        if(player==0){
-            board[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMin(alpha, beta, depth-1, board ,1, n+1);
+        if(player==1){
+            var newBoard = board
+            newBoard[path[i][0]][path[i][1]] = 2;
+            score[1] = alphaBetaMin(alpha, beta, depth-1, board ,1);
         }else{
-            board[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMin(alpha, beta, depth-1, board ,0, n+1);
+            var newBoard = board
+            newBoard[path[i][0]][path[i][1]] = 1;
+            score[1] = alphaBetaMin(alpha, beta, depth-1, board ,2);
         }
-        if(score>=beta){
-            return beta;
+        if(score[1]>=beta){
+            return [path[i],beta];
         }
-        if(score>alpha){
-            alpha=score;
+        if(score[1]<alpha){
+            alpha=score[path[i],score];
         }
     }
     return alpha;
 }
 
-function alphaBetaMin(alpha, beta, depth, board ,player, n){
+function alphaBetaMin(alpha, beta, depth, board ,player){
     info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
     delete info
-    let score = 0;
+    let score = [[3,3],0];
     if(path.length==0){
         return 0
     }
@@ -418,22 +411,31 @@ function alphaBetaMin(alpha, beta, depth, board ,player, n){
         return -1*nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
-        if(n==1){
-            console.log(`llamado #${i} de ${path.length-1}`)
-        }
-        if(player==0){
-            board[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMax(alpha, beta, depth-1, board ,1, n+1);
+        if(player==1){
+            var newBoard = board
+            newBoard[path[i][0]][path[i][1]] = 2;
+            score[1] = alphaBetaMax(alpha, beta, depth-1, board ,1);
         }else{
-            board[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMax(alpha, beta, depth-1, board ,0, n+1);
+            var newBoard = board
+            newBoard[path[i][0]][path[i][1]] = 1;
+            score[1] = alphaBetaMax(alpha, beta, depth-1, board ,2);
         }
-        if (score<=alpha){
-            return alpha;
+        if (score[1]<=alpha){
+            return [path[i],alpha];
         }
-        if(score<beta){
-            beta=score;
+        if(score[1]<beta){
+            beta=score[path[i],score];
         }
     }
     return beta;
+}
+
+function alphabetaminimax(alpha, beta, depth, board ,player){
+    if(player == 2){
+        player = 0
+        return alphaBetaMax(alpha, beta, depth, board ,player)
+    } else{
+        player = 1
+        return alphaBetaMax(alpha, beta, depth, board ,player)
+    }
 }

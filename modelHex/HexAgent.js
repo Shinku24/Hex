@@ -27,6 +27,8 @@ class HexAgent extends Agent {
             return [Math.floor(size / 2), Math.floor(size / 2)];
         }
 
+        var id = this.id
+
         let move = available[Math.round(Math.random() * ( available.length -1 ))];        
         //let matrixCostos = test(board,this.id);
         //alert("HOAL");
@@ -37,7 +39,7 @@ class HexAgent extends Agent {
         //console.log(board);
         /*let alphaBetaValue =alphaBetaMax(-INFINITY,INFINITY,6,board, this.id, []);
         console.log(alphaBetaValue);*/
-        let nodes = alphaBetaMax(-INFINITY, INFINITY, 3, board, this.id, 0)
+        let nodes = alphaBetaMin(-INFINITY, INFINITY, 3, board, id, 0)
         console.log(nodes);
         return move;
     }
@@ -297,7 +299,7 @@ function findNextCheaperNeighbor (board, nMatrix, player){
     let visitedNodes = [];
     let stopIterating = true;
     let size = board.length;
-    let position = [1,1];
+    let position = [];
     let menor = INFINITY;
     if(player == 1){
         for(var i=0; i<size;i++){
@@ -321,19 +323,21 @@ function findNextCheaperNeighbor (board, nMatrix, player){
         }
     }
 
+    if(shortestPath.length == 0){
+        return []
+    }
+
     visitedNodes.push(position);
     
     menor = INFINITY
     n=0
     while (stopIterating) {
         n=n+1
-        console.log(`me quede atrapado en el while? ${n}`)
-        console.log(`position: ${position}, board: ${board}`)
         let boolNeighbors = getValidNeighbors(position, board);
         let neighbors = getNeighbors(position, board);
         for (var i=0; i<neighbors.length; i++){
             if (boolNeighbors[i]) {
-                if (position[player] == 0 || n > 50){
+                if (position[player] == 0 || n < 26){
                     stopIterating = false;
                 }
                 if (include(visitedNodes, neighbors[i])){
@@ -372,14 +376,15 @@ class Node {
 }
 
 function alphaBetaMax(alpha, beta, depth, board ,player, n){
-    console.log("\n Maximo: \n")
-
     info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
     delete info
     let score = 0;
-    if(depth==0){
+    if(path.length==0){
+        return 0
+    }
+    if(depth==0 ){
         return nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
@@ -401,17 +406,21 @@ function alphaBetaMax(alpha, beta, depth, board ,player, n){
 }
 
 function alphaBetaMin(alpha, beta, depth, board ,player, n){
-    console.log("\n Minimo: \n")
-
     info = testDjk(board, player);
     let path = info[0];
     let nMatrix = info[1];
     delete info
     let score = 0;
+    if(path.length==0){
+        return 0
+    }
     if(depth==0){
         return -1*nMatrix[path[0][0]][path[0][1]];
     }
     for (var i=0; i<path.length; i++){
+        if(n==1){
+            console.log(`llamado #${i} de ${path.length-1}`)
+        }
         if(player==0){
             board[path[i][0]][path[i][1]] = 2;
             score = alphaBetaMax(alpha, beta, depth-1, board ,1, n+1);

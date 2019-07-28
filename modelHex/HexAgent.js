@@ -29,8 +29,11 @@ class HexAgent extends Agent {
 
         var id = this.id
         var auxBoard = board
-        let move = available[Math.round(Math.random() * ( available.length -1 ))];       
-        let nodes = alphabetaminimax([[0,0],-INFINITY], [[0,0],INFINITY], 3, auxBoard, id)
+        let move = available[Math.round(Math.random() * ( available.length -1 ))];
+        var alpha = -INFINITY*2;
+        var beta = INFINITY*2;
+        let nodes = alphabetaminimax([[0,0],alpha], [[0,0],beta], 3, auxBoard, id)
+        //console.log(id);
         console.log(nodes);
         return nodes[0];
     }
@@ -153,7 +156,10 @@ function getValidNeighbors(position, board){
 //----------------------------------------------------------------------------------------------------------------------
 function getCostoDjk(actualPosVal, player){
     //alert(actualPosVal);
-    if(actualPosVal== 0){
+    /*if(player==0){
+        player = 2;
+    }*/
+    if(actualPosVal==0){
         return  2;
     }else if(actualPosVal==player){
         return 1;
@@ -247,7 +253,7 @@ function testDjk(board, player){
                 }
                 else if(i==0){
                     matrix[i][j] = 3;
-                }else if(board[i][j]==0 || board[i][j]==player){
+                }else if(board[i][j]==0 || board[i][j]==player){ // || board[i][j]==player   ----------------------------------------------------
                     matrix[i][j] = -INFINITY;
                 }else{
                     matrix[i][j] = INFINITY;
@@ -356,9 +362,35 @@ function findNextCheaperNeighbor (board, nMatrix, player){
     return shortestPath
 }
 
-function alphaBetaMax(alpha, beta, depth, board ,player){
+function getHeuristic(value){
+    return value//Math.abs(100-value);
+}
+
+function removeAlreadyPLayed(board,path,player){
+    /*var valPlayer = player;
+    if(player!=1){
+        valPlayer = 2;
+    }*/
+    var pos = [];
+    var pathnew = path;
+
+    for(var i=0; i<path.length; i++){
+        pos = board[path[i][0]][path[i][1]];
+        if(pos==player){
+            pathnew.splice(i,1);
+        }
+    }
+    return pathnew;
+}
+
+function alphaBetaMax(alpha, beta, depth, board ,player){    
     info = testDjk(board, player);
     let path = info[0];
+    path = removeAlreadyPLayed(board,path,player);
+    //console.log(path);
+    if(depth==0){
+        //console.log(path);
+    }
     let nMatrix = info[1];
     delete info
     let score = [[3,3],0];
@@ -372,12 +404,15 @@ function alphaBetaMax(alpha, beta, depth, board ,player){
         var newBoard = JSON.parse(JSON.stringify(board));
         if(player==1){
             newBoard[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMin(alpha, beta, depth-1, newBoard  ,2);
+            score = alphaBetaMin(alpha, beta, depth-1, newBoard  ,2); //2
         }else{
             newBoard[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMin(alpha, beta, depth-1, newBoard ,1);
+            score = alphaBetaMin(alpha, beta, depth-1, newBoard ,1); //1
         }
         if(score[1]>=beta[1]){
+            if(beta[1]==INFINITY){
+                //console.log(score);  //-------------------------------
+            }
             return [path[i],beta[1]];
         }
         if(score[1]>alpha[1]){
@@ -390,6 +425,10 @@ function alphaBetaMax(alpha, beta, depth, board ,player){
 function alphaBetaMin(alpha, beta, depth, board ,player){
     info = testDjk(board, player);
     let path = info[0];
+    path = removeAlreadyPLayed(board,path,player);
+    if(depth==0){
+        //console.log(path);
+    }
     let nMatrix = info[1];
     delete info
     let score = [[3,3],0];
@@ -397,18 +436,20 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
         if(path.length == 0){
             return [[3,3],100];
         }
-        return [path[0],nMatrix[path[0][0]][path[0][1]]];
+        //console.log(player);
+        var heuristic = getHeuristic(nMatrix[path[0][0]][path[0][1]]);        
+        return [path[0],heuristic];
     }
     for (var i=0; i<path.length; i++){
         var newBoard = JSON.parse(JSON.stringify(board));
         if(player==1){
             newBoard[path[i][0]][path[i][1]] = 1;
-            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,2);
+            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,2);//2
         }else{
             newBoard[path[i][0]][path[i][1]] = 2;
-            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,1);
+            score = alphaBetaMax(alpha, beta, depth-1, newBoard ,1);//1
         }
-        if (score[1]<=alpha[1]){
+        if (score[1]<=alpha[1]){            
             return [path[i],alpha[1]];
         }
         if(score[1]<beta[1]){
@@ -420,10 +461,10 @@ function alphaBetaMin(alpha, beta, depth, board ,player){
 
 function alphabetaminimax(alpha, beta, depth, board ,player){
     if(player == 2){
-        player = 0
-        return alphaBetaMin(alpha, beta, depth, board ,player)
+        //player = 0
+        return alphaBetaMax(alpha, beta, depth, board ,player)
     } else{
-        player = 1
-        return alphaBetaMin(alpha, beta, depth, board ,player)
+        //player = 1
+        return alphaBetaMax(alpha, beta, depth, board ,player)
     }
 }
